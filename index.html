@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="Drift: a ten-minute descent through the ocean's four zones. Meet 20 real species, log a fact every 200 metres, and build a field guide to Earth's oceans.">
+<meta name="description" content="Drift: a ten-minute descent through the ocean's four zones. Meet 20 real sea creatures, log a fact every 200 metres, and build a field guide to Earth's oceans.">
 <meta name="theme-color" content="#03050c">
 <meta property="og:title" content="Drift">
 <meta property="og:description" content="A playable field guide to Earth's oceans. Sink from the surface to 6,000 m in about ten minutes.">
@@ -640,11 +640,16 @@ function sprite(c) {
 }
 function gl(c, x, y, r, col, a) {
   if (a <= 0.004 || r <= 0.3) return;
+  const sb = c.shadowBlur;
+  if (sb) c.shadowBlur = 0;
   c.globalAlpha = a > 1 ? 1 : a;
   c.drawImage(sprite(col), x - r, y - r, r * 2, r * 2);
+  if (sb) c.shadowBlur = sb;
 }
 const glow = (x, y, r, col, a) => gl(ctx, x, y, r, col, a);
-function ink(c, col, fa, sa, w) { c.globalAlpha = 1; c.fillStyle = rgb(col, fa); c.strokeStyle = rgb(col, sa); c.lineWidth = w; }
+function ink(c, col, fa, sa, w) { c.globalAlpha = 1; c.fillStyle = rgb(col, fa * 1.7); c.strokeStyle = rgb(col, Math.min(1, sa * 1.15)); c.lineWidth = w * 1.3; }
+/* Neon outline: a coloured glow around every stroke of a creature */
+function neon(c, col, a, px) { c.shadowColor = rgb(col, 0.9 * Math.min(1, a + 0.15)); c.shadowBlur = px; }
 const holeSpr = document.createElement('canvas');
 holeSpr.width = holeSpr.height = 128;
 {
@@ -744,10 +749,10 @@ function drawMoonJelly(c, L, t, a, lit, col) {
 }
 function drawClown(c, L, t, a, lit, col, dim) {
   const w = Math.sin(t * 8) * L * 0.05;
-  ink(c, col, 0.8 * a, 0.95 * a, 1.2);
+  ink(c, col, 0.38 * a, 0.95 * a, 1.2);
   c.beginPath(); c.moveTo(-L * 0.36, 0); c.quadraticCurveTo(-L * 0.62, -L * 0.26 + w, -L * 0.6, 0); c.quadraticCurveTo(-L * 0.62, L * 0.26 + w, -L * 0.36, 0); c.fill(); c.stroke();
   c.beginPath(); c.ellipse(0, 0, L * 0.42, L * 0.24, 0, 0, TAU); c.fill(); c.stroke();
-  c.strokeStyle = rgb(dim ? col : WHITE, 0.92 * a); c.lineWidth = Math.max(1.5, L * 0.07);
+  c.strokeStyle = rgb(dim ? col : WHITE, 0.75 * a); c.lineWidth = Math.max(1.5, L * 0.06);
   for (const bx of [0.24, 0, -0.25]) {
     const hh = Math.sqrt(Math.max(0, 1 - (bx / 0.42) ** 2)) * L * 0.22;
     c.beginPath(); c.moveTo(bx * L, -hh); c.quadraticCurveTo(bx * L + L * 0.05, 0, bx * L, hh); c.stroke();
@@ -1000,43 +1005,43 @@ function drawRattail(c, L, t, a, lit, col) {
 const SPECIES = [
   { id: 'coral', name: 'Reef-building corals', sci: 'Order Scleractinia', zone: 0, range: 'Mostly 0 to 50 m, in clear sunlit water', col: [255, 140, 150], L: 90, box: [1, 1], reef: true, draw: drawCoral,
     fact: 'Coral reefs cover less than 1% of the seafloor but shelter about a quarter of all marine species. The Great Barrier Reef stretches some 2,300 km.' },
-  { id: 'clown', name: 'Ocellaris clownfish', sci: 'Amphiprion ocellaris', zone: 0, range: 'Coral reefs, 1 to 15 m', col: [255, 150, 70], L: 30, box: [1.15, 0.6], reef: true, draw: drawClown,
+  { id: 'clown', name: 'Ocellaris clownfish', sci: 'Amphiprion ocellaris', zone: 0, range: 'Coral reefs, 1 to 15 m', col: [255, 150, 60], L: 30, box: [1.15, 0.6], reef: true, draw: drawClown,
     fact: 'Lives among sea anemones, shielded from their stings by a coat of mucus. All clownfish start life male; the dominant one in a group becomes female.' },
-  { id: 'turtle', name: 'Green sea turtle', sci: 'Chelonia mydas', zone: 0, range: 'Mostly surface to 50 m', band: [12, 175], col: [150, 255, 190], L: 80, box: [0.95, 1.16], speed: 42, draw: drawTurtle,
+  { id: 'turtle', name: 'Green sea turtle', sci: 'Chelonia mydas', zone: 0, range: 'Mostly surface to 50 m', band: [12, 175], col: [70, 235, 150], L: 80, box: [0.95, 1.16], speed: 42, draw: drawTurtle,
     fact: 'Adults graze on seagrass and algae, a diet that tints their body fat green and gives them their name. Resting turtles can stay underwater for hours.' },
-  { id: 'whaleshark', name: 'Whale shark', sci: 'Rhincodon typus', zone: 0, range: 'Surface to about 1,900 m', band: [0, 190], col: [150, 210, 255], L: 280, box: [1.06, 0.48], speed: 28, draw: drawWhaleShark,
+  { id: 'whaleshark', name: 'Whale shark', sci: 'Rhincodon typus', zone: 0, range: 'Surface to about 1,900 m', band: [0, 190], col: [60, 165, 255], L: 280, box: [1.06, 0.48], speed: 28, draw: drawWhaleShark,
     fact: 'The largest fish alive, reaching about 18 m. Despite its size it feeds by filtering plankton and small fish from the water.' },
-  { id: 'manta', name: 'Giant manta ray', sci: 'Mobula birostris', zone: 0, range: 'Surface to over 1,000 m', band: [30, 260], col: [200, 220, 255], L: 150, box: [1.0, 1.1], dx: 0.11, speed: 48, draw: drawManta,
+  { id: 'manta', name: 'Giant manta ray', sci: 'Mobula birostris', zone: 0, range: 'Surface to over 1,000 m', band: [30, 260], col: [40, 230, 215], L: 150, box: [1.0, 1.1], dx: 0.11, speed: 48, draw: drawManta,
     fact: 'Its fins can span about 7 m, and it has one of the largest brains for its body size of any fish. Mantas visit reef cleaning stations where small fish groom them.' },
-  { id: 'moonjelly', name: 'Moon jellyfish', sci: 'Aurelia aurita', zone: 0, range: 'Coastal surface waters', jelly: true, col: [200, 230, 255], L: 64, box: [1.15, 0.9], dy: -0.12, draw: drawMoonJelly,
+  { id: 'moonjelly', name: 'Moon jellyfish', sci: 'Aurelia aurita', zone: 0, range: 'Coastal surface waters', jelly: true, col: [185, 150, 255], L: 64, box: [1.15, 0.9], dy: -0.12, draw: drawMoonJelly,
     fact: 'About 95% water, with no brain, heart or blood. The four rings you can see in its bell are its reproductive organs.' },
-  { id: 'swordfish', name: 'Swordfish', sci: 'Xiphias gladius', zone: 1, range: 'Surface to about 600 m, sometimes deeper', band: [170, 650], col: [170, 200, 255], L: 140, box: [1.0, 0.38], speed: 150, draw: drawSwordfish,
+  { id: 'swordfish', name: 'Swordfish', sci: 'Xiphias gladius', zone: 1, range: 'Surface to about 600 m, sometimes deeper', band: [170, 650], col: [70, 130, 255], L: 140, box: [1.0, 0.38], speed: 150, draw: drawSwordfish,
     fact: 'Warms its eyes and brain with a special heater organ, keeping its vision sharp in cold, dark water during deep hunting dives.' },
-  { id: 'lantern', name: 'Lanternfish', sci: 'Family Myctophidae', zone: 1, range: '300 to 1,200 m by day, near the surface at night', band: [230, 1100], col: [150, 200, 255], L: 150, box: [1, 0.75], speed: 55, draw: drawLantern,
+  { id: 'lantern', name: 'Lanternfish', sci: 'Family Myctophidae', zone: 1, range: '300 to 1,200 m by day, near the surface at night', band: [230, 1100], col: [255, 205, 80], L: 150, box: [1, 0.75], speed: 55, draw: drawLantern,
     fact: 'Named for the light organs along their bodies. Lanternfish may make up most of the weight of all deep-sea fish, and they rise to the surface every night to feed.' },
-  { id: 'hatchet', name: 'Silver hatchetfish', sci: 'Argyropelecus aculeatus', zone: 1, range: 'About 200 to 600 m', band: [230, 700], col: [200, 215, 255], L: 56, box: [0.85, 0.45], speed: 30, draw: drawHatchet,
+  { id: 'hatchet', name: 'Silver hatchetfish', sci: 'Argyropelecus aculeatus', zone: 1, range: 'About 200 to 600 m', band: [230, 700], col: [170, 245, 255], L: 56, box: [0.85, 0.45], speed: 30, draw: drawHatchet,
     fact: 'Lights along its belly match the faint glow from above, erasing its silhouette from predators below. The trick is called counter-illumination.' },
-  { id: 'barreleye', name: 'Barreleye', sci: 'Macropinna microstoma', zone: 1, range: 'About 600 to 800 m', band: [560, 900], col: [170, 255, 200], L: 84, box: [0.85, 0.38], speed: 20, draw: drawBarreleye,
+  { id: 'barreleye', name: 'Barreleye', sci: 'Macropinna microstoma', zone: 1, range: 'About 600 to 800 m', band: [560, 900], col: [90, 255, 130], L: 84, box: [0.85, 0.38], speed: 20, draw: drawBarreleye,
     fact: 'Its head is a transparent dome. The green tubular eyes inside can rotate to look straight up for prey or forward while it feeds.' },
-  { id: 'giantsquid', name: 'Giant squid', sci: 'Architeuthis dux', zone: 1, range: 'About 300 to 1,000 m', band: [400, 1000], col: [255, 160, 140], L: 230, box: [1.05, 0.26], speed: 38, draw: drawGiantSquid,
+  { id: 'giantsquid', name: 'Giant squid', sci: 'Architeuthis dux', zone: 1, range: 'About 300 to 1,000 m', band: [400, 1000], col: [255, 95, 80], L: 230, box: [1.05, 0.26], speed: 38, draw: drawGiantSquid,
     fact: 'Its eyes can be 27 cm across, among the largest in the animal kingdom. It was first filmed alive in its deep habitat in 2012.' },
-  { id: 'comb', name: 'Comb jelly', sci: 'Phylum Ctenophora', zone: 1, range: 'Surface to the deep sea', jelly: true, col: [200, 220, 255], L: 56, box: [0.7, 1.08], draw: drawComb,
+  { id: 'comb', name: 'Comb jelly', sci: 'Phylum Ctenophora', zone: 1, range: 'Surface to the deep sea', jelly: true, col: [255, 110, 225], L: 56, box: [0.7, 1.08], draw: drawComb,
     fact: 'Swims by beating rows of tiny hairs called combs. They scatter light into shimmering rainbows, which is a different effect from bioluminescence.' },
-  { id: 'vampire', name: 'Vampire squid', sci: 'Vampyroteuthis infernalis', zone: 1, range: 'About 600 to 1,200 m', band: [700, 1300], col: [230, 90, 110], L: 84, box: [0.9, 0.9], up: true, speed: 8, draw: drawVampire,
+  { id: 'vampire', name: 'Vampire squid', sci: 'Vampyroteuthis infernalis', zone: 1, range: 'About 600 to 1,200 m', band: [700, 1300], col: [200, 60, 255], L: 84, box: [0.9, 0.9], up: true, speed: 8, draw: drawVampire,
     fact: 'Neither a squid nor an octopus. It lives in water with very little oxygen and eats marine snow, not blood. When threatened it can release a cloud of glowing mucus.' },
-  { id: 'sperm', name: 'Sperm whale', sci: 'Physeter macrocephalus', zone: 2, range: 'Surface to over 2,000 m', band: [1000, 2300], col: [170, 190, 235], L: 320, box: [1.06, 0.26], speed: 36, draw: drawSperm,
+  { id: 'sperm', name: 'Sperm whale', sci: 'Physeter macrocephalus', zone: 2, range: 'Surface to over 2,000 m', band: [1000, 2300], col: [255, 175, 85], L: 320, box: [1.06, 0.26], speed: 36, draw: drawSperm,
     fact: 'Has the largest brain of any animal. It hunts squid in total darkness with clicks of sound that are among the loudest made by any animal.' },
-  { id: 'angler', name: 'Humpback anglerfish', sci: 'Melanocetus johnsonii', zone: 2, range: 'Mostly about 200 to 2,000 m', band: [1000, 2700], col: [150, 140, 210], L: 80, box: [0.98, 0.72], dy: 0.07, speed: 18, draw: drawAngler,
+  { id: 'angler', name: 'Humpback anglerfish', sci: 'Melanocetus johnsonii', zone: 2, range: 'Mostly about 200 to 2,000 m', band: [1000, 2700], col: [150, 95, 255], L: 80, box: [0.98, 0.72], dy: 0.07, speed: 18, draw: drawAngler,
     fact: 'Dangles a glowing lure, lit by bacteria, to draw prey toward its huge, toothy mouth. Females are far larger than males.' },
-  { id: 'gulper', name: 'Gulper eel', sci: 'Eurypharynx pelecanoides', zone: 2, range: 'About 500 to 3,000 m', band: [1050, 3000], col: [150, 170, 255], L: 170, box: [0.95, 0.38], dx: 0.05, speed: 26, draw: drawGulper,
+  { id: 'gulper', name: 'Gulper eel', sci: 'Eurypharynx pelecanoides', zone: 2, range: 'About 500 to 3,000 m', band: [1050, 3000], col: [50, 220, 255], L: 170, box: [0.95, 0.38], dx: 0.05, speed: 26, draw: drawGulper,
     fact: 'Its loosely hinged mouth opens far wider than its body and works like a net. The tip of its whip-like tail can glow.' },
-  { id: 'atolla', name: 'Atolla jellyfish', sci: 'Atolla wyvillei', zone: 2, range: 'Mostly about 1,000 to 4,000 m', jelly: true, col: [230, 110, 130], L: 64, box: [1.3, 1.25], dy: -0.25, draw: drawAtolla,
+  { id: 'atolla', name: 'Atolla jellyfish', sci: 'Atolla wyvillei', zone: 2, range: 'Mostly about 1,000 to 4,000 m', jelly: true, col: [255, 75, 70], L: 64, box: [1.3, 1.25], dy: -0.25, draw: drawAtolla,
     fact: 'When attacked, it flashes a spinning ring of blue light. This burglar alarm may summon bigger predators to eat its attacker.' },
-  { id: 'dumbo', name: 'Dumbo octopus', sci: 'Genus Grimpoteuthis', zone: 2, range: 'About 1,000 to 7,000 m', band: [2400, 6000], col: [255, 170, 200], L: 84, box: [0.9, 0.85], dy: 0.05, up: true, speed: 6, draw: drawDumbo,
+  { id: 'dumbo', name: 'Dumbo octopus', sci: 'Genus Grimpoteuthis', zone: 2, range: 'About 1,000 to 7,000 m', band: [2400, 6000], col: [255, 125, 185], L: 84, box: [0.9, 0.85], dy: 0.05, up: true, speed: 6, draw: drawDumbo,
     fact: 'Swims by flapping ear-like fins. One filmed at nearly 7,000 m is the deepest octopus ever seen.' },
-  { id: 'bigfin', name: 'Bigfin squid', sci: 'Genus Magnapinna', zone: 3, range: 'About 1,900 to 6,200 m', band: [3400, 6000], col: [220, 225, 255], L: 220, box: [0.4, 1.02], up: true, speed: 3, draw: drawBigfin,
+  { id: 'bigfin', name: 'Bigfin squid', sci: 'Genus Magnapinna', zone: 3, range: 'About 1,900 to 6,200 m', band: [3400, 6000], col: [215, 175, 255], L: 220, box: [0.4, 1.02], up: true, speed: 3, draw: drawBigfin,
     fact: 'Its thin arms bend at sharp elbows and hang down for metres, possibly making it up to 8 m long. It has been filmed only a handful of times.' },
-  { id: 'rattail', name: 'Grenadier (rattail)', sci: 'Family Macrouridae', zone: 3, range: 'From about 200 m to over 6,000 m', band: [3600, 6000], col: [200, 205, 225], L: 100, box: [0.95, 0.36], speed: 28, draw: drawRattail,
+  { id: 'rattail', name: 'Grenadier (rattail)', sci: 'Family Macrouridae', zone: 3, range: 'From about 200 m to over 6,000 m', band: [3600, 6000], col: [60, 230, 190], L: 100, box: [0.95, 0.36], speed: 28, draw: drawRattail,
     fact: 'Among the most common fish on the deep seafloor. Rattails gather quickly at any food that sinks from above, finding it largely by smell.' },
 ];
 const SPMAP = {};
@@ -1326,6 +1331,7 @@ function drawThumb(cv, sp, dim) {
   c.save();
   c.translate(w / 2 + (sp.dx || 0) * L, h / 2 + (sp.dy || 0) * L);
   c.lineCap = 'round'; c.lineJoin = 'round';
+  if (!dim) neon(c, sp.col, 1, clamp(Math.min(w, h) * 0.07, 5, 14));
   sp.draw(c, L, 1.3, dim ? 0.32 : 1, dim ? 0 : 0.7, dim ? GREY : sp.col, dim);
   c.restore();
   c.globalCompositeOperation = 'source-over'; c.globalAlpha = 1;
@@ -1697,7 +1703,7 @@ function drawIcon(cv, kind) {
   } else if (kind === 'magnet' || kind === 'surge' || kind === 'radiance') {
     drawOrb(c, x, y, kind, 0.6);
   } else if (kind === 'jelly') {
-    c.save(); c.translate(x, y - 10); drawMoonJelly(c, 62, 1, 1, 0.9, SPMAP.moonjelly.col); c.restore();
+    c.save(); c.translate(x, y - 10); neon(c, SPMAP.moonjelly.col, 1, 8); drawMoonJelly(c, 62, 1, 1, 0.9, SPMAP.moonjelly.col); c.restore();
     for (let k = 0; k < 5; k++) { const a = k / 5 * TAU + 0.5; gl(c, x + Math.cos(a) * 42, y + Math.sin(a) * 36, 12, SPMAP.moonjelly.col, 0.55); gl(c, x + Math.cos(a) * 42, y + Math.sin(a) * 36, 3, WHITE, 0.9); }
   } else if (kind === 'player') {
     drawMiniPlayer(c, x, y - 10, 17, 1);
@@ -1720,12 +1726,12 @@ function drawIcon(cv, kind) {
     c.globalAlpha = 1;
     [[30, 3, 0.6], [44, 1.6, 0.35]].forEach(([r, lw, a]) => { c.strokeStyle = rgb(PLAYER_COL, a); c.lineWidth = lw; c.beginPath(); c.arc(x, y, r, 0, TAU); c.stroke(); });
   } else if (kind === 'seek') {
-    c.save(); c.translate(x, y); drawTurtle(c, 66, 1, 1, 0, SPMAP.turtle.col); c.restore();
+    c.save(); c.translate(x, y); neon(c, SPMAP.turtle.col, 1, 8); drawTurtle(c, 66, 1, 1, 0, SPMAP.turtle.col); c.restore();
     c.globalAlpha = 1; c.strokeStyle = rgb(SPMAP.turtle.col, 0.5); c.lineWidth = 1.5; c.setLineDash([4, 6]);
     c.beginPath(); c.arc(x, y, 46, 0, TAU); c.stroke(); c.setLineDash([]);
   } else if (kind === 'reef') {
-    c.save(); c.translate(x, y + 2); drawCoral(c, 88, 1, 1, 0, SPMAP.coral.col, false); c.restore();
-    c.save(); c.translate(x + 26, y - 26); drawClown(c, 24, 1, 1, 0, SPMAP.clown.col, false); c.restore();
+    c.save(); c.translate(x, y + 2); neon(c, SPMAP.coral.col, 1, 7); drawCoral(c, 88, 1, 1, 0, SPMAP.coral.col, false); c.restore();
+    c.save(); c.translate(x + 26, y - 26); neon(c, SPMAP.clown.col, 1, 6); drawClown(c, 24, 1, 1, 0, SPMAP.clown.col, false); c.restore();
   }
   c.globalCompositeOperation = 'source-over'; c.globalAlpha = 1;
 }
@@ -2232,16 +2238,19 @@ function render() {
   }
   for (const c of creatures) {
     const d = Math.hypot(P.x - c.x, P.y - c.y);
-    const vis = clamp((1 - dark * 0.88) + clamp(1 - d / (lr * 1.5), 0, 1), 0.16, 1);
+    const vis = clamp((1 - dark * 0.6) + clamp(1 - d / (lr * 1.5), 0, 1), 0.7, 1);
     ctx.save(); ctx.translate(c.x, c.y); if (!c.sp.up) ctx.scale(c.dir, 1);
+    gl(ctx, 0, c.sp.up ? -c.L * 0.15 : 0, c.L * 0.62, c.sp.col, 0.22 * vis);
+    neon(ctx, c.sp.col, vis, clamp(c.L * 0.08, 10, 20) * DPR);
     c.sp.draw(ctx, c.L, c.t, vis, 0, c.sp.col, false);
     ctx.restore();
     if (!journal.sp.has(c.sp.id)) drawSeekRing(c.x, c.y, c.L * (c.sp.up ? 0.45 : 0.4) + 22, c.sp.col);
   }
   for (const j of jellies) {
     const d = Math.hypot(P.x - j.x, P.y - j.y);
-    const vis = clamp((1 - dark * 0.8) + clamp(1 - d / (lr * 1.5), 0, 1), 0.3, 1);
+    const vis = clamp((1 - dark * 0.6) + clamp(1 - d / (lr * 1.5), 0, 1), 0.7, 1);
     ctx.save(); ctx.translate(j.x, j.y);
+    neon(ctx, j.sp.col, vis, (12 + 8 * j.lit) * DPR);
     j.sp.draw(ctx, j.R * 2, j.ph, vis, j.lit, j.sp.col, false);
     ctx.restore();
     if (!journal.sp.has(j.sp.id)) drawSeekRing(j.x, j.y + j.R * 0.3, j.R * 1.3 + 16, j.sp.col);
@@ -2266,6 +2275,7 @@ function render() {
   }
   drawPowersFx();
   drawPlayer();
+  for (const s of shadows) drawEelOutline(s);
   for (const s of shadows) {
     const h = s.segs[0], n = s.segs[2];
     const ex = h.x - n.x, ey = h.y - n.y, el = Math.hypot(ex, ey) || 1;
@@ -2309,6 +2319,28 @@ function render() {
   }
 }
 
+const EEL_COL = [170, 70, 255];
+function drawEelOutline(s) {
+  const segs = s.segs, n = segs.length, L = [], R = [];
+  for (let i = 0; i < n; i++) {
+    const a = segs[Math.max(0, i - 1)], b = segs[Math.min(n - 1, i + 1)];
+    const dx = b.x - a.x, dy = b.y - a.y, dl = Math.hypot(dx, dy) || 1;
+    const nx = -dy / dl, ny = dx / dl, rad = 13 * Math.pow(1 - i / n, 0.7) + 2;
+    L.push([segs[i].x + nx * rad, segs[i].y + ny * rad]); R.push([segs[i].x - nx * rad, segs[i].y - ny * rad]);
+  }
+  const a = (s.stun > 0 ? 0.35 : 0.85) * (0.85 + 0.15 * Math.sin(G.t * 3 + s.ph));
+  ctx.save();
+  ctx.globalAlpha = 1; ctx.lineWidth = 1.6; ctx.lineJoin = 'round';
+  ctx.strokeStyle = rgb(EEL_COL, a);
+  neon(ctx, EEL_COL, a, 12 * DPR);
+  ctx.beginPath();
+  const h = segs[0], hr = 15;
+  ctx.moveTo(L[0][0], L[0][1]);
+  for (let i = 1; i < n; i++) ctx.lineTo(L[i][0], L[i][1]);
+  for (let i = n - 1; i >= 0; i--) ctx.lineTo(R[i][0], R[i][1]);
+  ctx.closePath(); ctx.stroke();
+  ctx.restore();
+}
 function drawSeekRing(x, y, r, col) {
   ctx.globalAlpha = 1;
   ctx.strokeStyle = rgb(col, 0.28 + 0.12 * Math.sin(G.t * 3));
@@ -2376,6 +2408,7 @@ function drawReefChunk(ch) {
       if (k.clown && k.clown.x) {
         ctx.save(); ctx.translate(k.clown.x, k.clown.y);
         ctx.scale(Math.cos(G.t * 1.3 + k.ph) >= 0 ? -sg : sg, 1);
+        neon(ctx, SPMAP.clown.col, 1, 8 * DPR);
         drawClown(ctx, 28 * clamp(W / 1100, 0.75, 1), G.t, 1, 0, SPMAP.clown.col, false);
         ctx.restore();
         ctx.globalAlpha = 1;
